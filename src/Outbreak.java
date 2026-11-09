@@ -17,8 +17,76 @@ public class Outbreak {
      * Main calls this twice: with all costs equal to 1 (the line "Tests needed") and with the real costs ("Cheapest testing").
      */
     public static boolean[] cheapestTests(int n, int[][] nb, int[] cost) {
-        // TODO Mission 5a
-        return new boolean[n];
+        boolean[] tested = new boolean[n];
+
+        if (n == 0) {
+            return tested;
+        }
+
+        int[][] dp = new int[2][n];
+
+
+        calculateDP(0, -1, nb, cost, dp);
+
+
+        boolean rootTested = dp[1][0] <= dp[0][0];
+
+
+        rebuild(0, -1, rootTested, nb, dp, tested);
+
+        return tested;
+    }
+
+
+    private static void calculateDP(
+            int v, int parent, int[][] nb,
+            int[] cost, int[][] dp) {
+
+        dp[1][v] = cost[v];
+        dp[0][v] = 0;
+
+        for (int child : nb[v]) {
+            if (child == parent) {
+                continue;
+            }
+
+            calculateDP(child, v, nb, cost, dp);
+
+
+            dp[0][v] += dp[1][child];
+
+
+            dp[1][v] += Math.min(
+                    dp[0][child],
+                    dp[1][child]
+            );
+        }
+    }
+
+
+    private static void rebuild(
+            int v, int parent, boolean isTested,
+            int[][] nb, int[][] dp, boolean[] tested) {
+
+        tested[v] = isTested;
+
+        for (int child : nb[v]) {
+            if (child == parent) {
+                continue;
+            }
+
+            boolean childTested;
+
+            if (!isTested) {
+
+                childTested = true;
+            } else {
+
+                childTested = dp[1][child] <= dp[0][child];
+            }
+
+            rebuild(child, v, childTested, nb, dp, tested);
+        }
     }
 
     /**
@@ -27,7 +95,42 @@ public class Outbreak {
      * Example: a line 0-1-2-3 has chain 3; a star with centre 0 and leaves 1, 2, 3 has chain 2.
      */
     public static int longestChain(int n, int[][] nb) {
-        // TODO Mission 5b
-        return -1;
+        if (n <= 1) {
+            return 0;
+        }
+
+        int[] best = new int[1];
+
+        longestDown(0, -1, nb, best);
+
+        return best[0];
+    }
+
+
+    private static int longestDown(
+            int v, int parent, int[][] nb, int[] best) {
+
+        int longest = 0;
+        int second = 0;
+
+        for (int child : nb[v]) {
+            if (child == parent) {
+                continue;
+            }
+
+            int length = 1 + longestDown(child, v, nb, best);
+
+            if (length > longest) {
+                second = longest;
+                longest = length;
+            } else if (length > second) {
+                second = length;
+            }
+        }
+
+
+        best[0] = Math.max(best[0], longest + second);
+
+        return longest;
     }
 }
