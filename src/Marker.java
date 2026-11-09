@@ -84,7 +84,84 @@ public class Marker {
      * Example: a = "ACGTAC", b = "TTACGT", k = 4: the words of a are ACGT, CGTA, GTAC; only ACGT is in b, so the answer is 1.
      */
     public static int sharedWords(String a, String b, int k) {
-        // TODO Mission 4
-        return -1;
+        if (k <= 0 || a.length() < k || b.length() < k) {
+            return 0;
+        }
+
+        final long BASE = 5;
+        final long MOD = 1_000_000_007L;
+
+
+        long power = 1;
+
+        for (int i = 1; i < k; i++) {
+            power = (power * BASE) % MOD;
+        }
+
+
+        HashMap<Long, ArrayList<Integer>> hashMap = new HashMap<>();
+
+        long hash = 0;
+
+        for (int i = 0; i < k; i++) {
+            hash = (hash * BASE + (b.charAt(i) - 'A' + 1)) % MOD;
+        }
+
+        hashMap.computeIfAbsent(hash, x -> new ArrayList<>()).add(0);
+
+
+        for (int i = k; i < b.length(); i++) {
+            long outgoing = b.charAt(i - k) - 'A' + 1;
+            long incoming = b.charAt(i) - 'A' + 1;
+
+            hash = (hash - outgoing * power % MOD + MOD) % MOD;
+            hash = (hash * BASE + incoming) % MOD;
+
+            int position = i - k + 1;
+
+            hashMap.computeIfAbsent(hash, x -> new ArrayList<>()).add(position);
+        }
+
+        // Search for every window in a
+        int count = 0;
+        hash = 0;
+
+        for (int i = 0; i < k; i++) {
+            hash = (hash * BASE + (a.charAt(i) - 'A' + 1)) % MOD;
+        }
+
+        for (int i = 0; i <= a.length() - k; i++) {
+
+            ArrayList<Integer> positions = hashMap.get(hash);
+
+            if (positions != null) {
+                for (int position : positions) {
+                    boolean equal = true;
+
+                    for (int j = 0; j < k; j++) {
+                        if (a.charAt(i + j) != b.charAt(position + j)) {
+                            equal = false;
+                            break;
+                        }
+                    }
+
+                    if (equal) {
+                        count++;
+                        break;
+                    }
+                }
+            }
+
+
+            if (i < a.length() - k) {
+                long outgoing = a.charAt(i) - 'A' + 1;
+                long incoming = a.charAt(i + k) - 'A' + 1;
+
+                hash = (hash - outgoing * power % MOD + MOD) % MOD;
+                hash = (hash * BASE + incoming) % MOD;
+            }
+        }
+
+        return count;
     }
 }
